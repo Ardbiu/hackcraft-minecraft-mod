@@ -2,6 +2,10 @@
 
 A Fabric Minecraft mod adding unique utility items for exploration and movement.
 
+## Video Demo
+
+Watch the features in action: [YouTube Demo](https://www.youtube.com/watch?v=KV0J-MEmU08)
+
 ## Features
 
 ### 1. Glowstep Boots
