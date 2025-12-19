@@ -3,48 +3,53 @@ package com.example;
 import com.example.block.TemporaryLightBlock;
 import com.example.block.entity.TemporaryLightBlockEntity;
 import com.example.item.GlowstepBootsItem;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.item.Item;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
+import com.example.item.GrappleHookItem;
+import com.example.item.RecallTotemItem;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 
 public class ModContent {
-    
+
     public static final TemporaryLightBlock TEMPORARY_LIGHT_BLOCK;
     public static final BlockEntityType<TemporaryLightBlockEntity> TEMPORARY_LIGHT_BLOCK_ENTITY;
     public static final GlowstepBootsItem GLOWSTEP_BOOTS;
-    public static final com.example.item.GrappleHookItem GRAPPLE_HOOK;
-    public static final com.example.item.RecallTotemItem RECALL_TOTEM;
+    public static final GrappleHookItem GRAPPLE_HOOK;
+    public static final RecallTotemItem RECALL_TOTEM;
 
     static {
-        // Block Settings: Air-like, luminance 12, no collision, replaceable, drops nothing
-        AbstractBlock.Settings blockSettings = AbstractBlock.Settings.copy(Blocks.AIR)
-                .luminance(state -> 12)
-                .noCollision()
+        BlockBehaviour.Properties blockSettings = BlockBehaviour.Properties.ofFullCopy(Blocks.AIR)
+                .lightLevel(state -> 12)
+                .noCollission()
                 .replaceable()
-                .dropsNothing()
-                .nonOpaque(); // Ensure it's treated as transparent
+                .noLootTable()
+                .noOcclusion();
 
         TEMPORARY_LIGHT_BLOCK = new TemporaryLightBlock(blockSettings);
 
-        // Block Entity
-        TEMPORARY_LIGHT_BLOCK_ENTITY = BlockEntityType.Builder.create(TemporaryLightBlockEntity::new, TEMPORARY_LIGHT_BLOCK)
+        TEMPORARY_LIGHT_BLOCK_ENTITY = BlockEntityType.Builder.of(TemporaryLightBlockEntity::new, TEMPORARY_LIGHT_BLOCK)
                 .build(null);
 
-        // Item Settings
-        GLOWSTEP_BOOTS = new GlowstepBootsItem(new Item.Settings().maxCount(1));
-        GRAPPLE_HOOK = new com.example.item.GrappleHookItem(new Item.Settings().maxCount(1));
-        RECALL_TOTEM = new com.example.item.RecallTotemItem(new Item.Settings().maxCount(1).maxDamage(64));
+        GLOWSTEP_BOOTS = new GlowstepBootsItem(new Item.Properties().stacksTo(1));
+        GRAPPLE_HOOK = new GrappleHookItem(new Item.Properties().stacksTo(1));
+        RECALL_TOTEM = new RecallTotemItem(new Item.Properties().stacksTo(1).durability(64));
     }
 
     public static void register() {
-        Registry.register(Registries.BLOCK, Identifier.of(ExampleMod.MOD_ID, "temporary_light"), TEMPORARY_LIGHT_BLOCK);
-        Registry.register(Registries.BLOCK_ENTITY_TYPE, Identifier.of(ExampleMod.MOD_ID, "temporary_light"), TEMPORARY_LIGHT_BLOCK_ENTITY);
-        Registry.register(Registries.ITEM, Identifier.of(ExampleMod.MOD_ID, "glowstep_boots"), GLOWSTEP_BOOTS);
-        Registry.register(Registries.ITEM, Identifier.of(ExampleMod.MOD_ID, "grapple_hook"), GRAPPLE_HOOK);
-        Registry.register(Registries.ITEM, Identifier.of(ExampleMod.MOD_ID, "recall_totem"), RECALL_TOTEM);
+        Registry.register(BuiltInRegistries.BLOCK,
+                ResourceLocation.fromNamespaceAndPath(ExampleMod.MOD_ID, "temporary_light"), TEMPORARY_LIGHT_BLOCK);
+        Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+                ResourceLocation.fromNamespaceAndPath(ExampleMod.MOD_ID, "temporary_light"),
+                TEMPORARY_LIGHT_BLOCK_ENTITY);
+        Registry.register(BuiltInRegistries.ITEM,
+                ResourceLocation.fromNamespaceAndPath(ExampleMod.MOD_ID, "glowstep_boots"), GLOWSTEP_BOOTS);
+        Registry.register(BuiltInRegistries.ITEM,
+                ResourceLocation.fromNamespaceAndPath(ExampleMod.MOD_ID, "grapple_hook"), GRAPPLE_HOOK);
+        Registry.register(BuiltInRegistries.ITEM,
+                ResourceLocation.fromNamespaceAndPath(ExampleMod.MOD_ID, "recall_totem"), RECALL_TOTEM);
     }
 }

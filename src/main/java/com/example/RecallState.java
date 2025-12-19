@@ -1,85 +1,84 @@
 package com.example;
 
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class RecallState extends PersistentState {
+public class RecallState extends SavedData {
     public Map<UUID, RecallPos> recalls = new HashMap<>();
 
     public static RecallState getServerState(MinecraftServer server) {
-        // Use the Overworld to store the state globally
-        return server.getOverworld().getPersistentStateManager().getOrCreate(
-                new Type<>(RecallState::new, RecallState::fromNbt, null),
-                "recall_totem_data"
-        );
+        return server.overworld().getDataStorage().computeIfAbsent(
+                new Factory<>(RecallState::new, RecallState::load, null),
+                "recall_totem_data");
     }
 
-    public static RecallState fromNbt(NbtCompound nbt, net.minecraft.registry.RegistryWrapper.WrapperLookup registryLookup) {
+    public static RecallState load(CompoundTag tag, HolderLookup.Provider registries) {
         RecallState state = new RecallState();
-        NbtList list = nbt.getList("Recalls", NbtElement.COMPOUND_TYPE);
-        for (NbtElement element : list) {
-            NbtCompound compound = (NbtCompound) element;
-            UUID uuid = compound.getUuid("UUID");
-            RecallPos pos = RecallPos.fromNbt(compound);
+        ListTag list = tag.getList("Recalls", Tag.TAG_COMPOUND);
+        for (Tag element : list) {
+            CompoundTag compound = (CompoundTag) element;
+            UUID uuid = compound.getUUID("UUID");
+            RecallPos pos = RecallPos.fromTag(compound);
             state.recalls.put(uuid, pos);
         }
         return state;
     }
 
     @Override
-    public NbtCompound writeNbt(NbtCompound nbt, net.minecraft.registry.RegistryWrapper.WrapperLookup registryLookup) {
-        NbtList list = new NbtList();
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        ListTag list = new ListTag();
         for (Map.Entry<UUID, RecallPos> entry : recalls.entrySet()) {
-            NbtCompound compound = entry.getValue().toNbt();
-            compound.putUuid("UUID", entry.getKey());
+            CompoundTag compound = entry.getValue().toTag();
+            compound.putUUID("UUID", entry.getKey());
             list.add(compound);
         }
-        nbt.put("Recalls", list);
-        return nbt;
+        tag.put("Recalls", list);
+        return tag;
     }
 
     public static class RecallPos {
-        public final RegistryKey<World> dim;
-        public final Vec3d pos;
+        public final ResourceKey<Level> dim;
+        public final Vec3 pos;
         public final float yaw;
         public final float pitch;
 
-        public RecallPos(RegistryKey<World> dim, Vec3d pos, float yaw, float pitch) {
+        public RecallPos(ResourceKey<Level> dim, Vec3 pos, float yaw, float pitch) {
             this.dim = dim;
             this.pos = pos;
             this.yaw = yaw;
             this.pitch = pitch;
         }
 
-        public NbtCompound toNbt() {
-            NbtCompound nbt = new NbtCompound();
-            nbt.putString("Dim", dim.getValue().toString());
-            nbt.putDouble("X", pos.x);
-            nbt.putDouble("Y", pos.y);
-            nbt.putDouble("Z", pos.z);
-            nbt.putFloat("Yaw", yaw);
-            nbt.putFloat("Pitch", pitch);
-            return nbt;
+        public CompoundTag toTag() {
+            CompoundTag tag = new CompoundTag();
+            tag.putString("Dim", dim.location().toString());
+            tag.putDouble("X", pos.x);
+            tag.putDouble("Y", pos.y);
+            tag.putDouble("Z", pos.z);
+            tag.putFloat("Yaw", yaw);
+            tag.putFloat("Pitch", pitch);
+            return tag;
         }
 
-        public static RecallPos fromNbt(NbtCompound nbt) {
-            Identifier dimId = Identifier.of(nbt.getString("Dim"));
-            RegistryKey<World> dim = RegistryKey.of(RegistryKeys.WORLD, dimId);
-            Vec3d pos = new Vec3d(nbt.getDouble("X"), nbt.getDouble("Y"), nbt.getDouble("Z"));
-            float yaw = nbt.getFloat("Yaw");
-            float pitch = nbt.getFloat("Pitch");
+        public static RecallPos fromTag(CompoundTag tag) {
+            ResourceLocation dimId = ResourceLocation.parse(tag.getString("Dim"));
+            ResourceKey<Level> dim = ResourceKey.create(Registries.DIMENSION, dimId);
+            Vec3 pos = new Vec3(tag.getDouble("X"), tag.getDouble("Y"), tag.getDouble("Z"));
+            float yaw = tag.getFloat("Yaw");
+            float pitch = tag.getFloat("Pitch");
             return new RecallPos(dim, pos, yaw, pitch);
         }
     }
